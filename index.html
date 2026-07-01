@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operational Intelligence Lab</title>
+<meta name="description" content="A running study of where organizations lose the most to fragmented coordination, and how small the fix can actually be.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF8F7;
+    --surface:#FFFFFF;
+    --ink:#16233F;
+    --ink-soft:#4A5670;
+    --ink-faint:#8891A6;
+    --amber:#C43D6B;
+    --amber-soft:#FBE4EC;
+    --slate:#1F8C82;
+    --slate-soft:#DEF3F0;
+    --line:#E6E2E1;
+    --watchlist:#1F8C82;
+    --pink:#E8749A;
+    --pink-deep:#C43D6B;
+    --pink-soft:#FBE4EC;
+    --turquoise:#3FC1B0;
+    --turquoise-deep:#1F8C82;
+    --turquoise-soft:#DEF3F0;
+    --active-dot:#E8749A;
+    --watch-dot:#1F8C82;
+    --target-fill: rgba(232,116,154,0.08);
+    --radius: 3px;
+    --max: 920px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter', -apple-system, sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  h1,h2,h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    margin:0;
+    color:var(--ink);
+  }
+
+  .mono{
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  a { color:inherit; }
+
+  .wrap{
+    max-width:var(--max);
+    margin:0 auto;
+    padding:0 28px;
+  }
+
+  /* Focus visibility */
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(245,246,242,0.88);
+    backdrop-filter: blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  nav .wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-top:16px; padding-bottom:16px;
+  }
+  .brand{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:0.02em;
+    display:flex; align-items:center; gap:9px;
+  }
+  .brand .dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--amber);
+    flex:none;
+  }
+  .nav-link{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    text-decoration:none;
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+    padding:7px 14px;
+    border-radius:var(--radius);
+    transition: border-color .18s ease, color .18s ease, background .18s ease;
+    white-space:nowrap;
+  }
+  .nav-link:hover{ border-color:var(--amber); color:var(--ink); background:var(--amber-soft); }
+
+  /* ---------- REVEAL ---------- */
+  .reveal{
+    opacity:0;
+    transform: translateY(14px);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .reveal.in{ opacity:1; transform:none; }
+
+  /* ---------- HERO ---------- */
+  header.hero{
+    padding:96px 0 72px;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin-bottom:22px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:22px; height:1px;
+    background:var(--amber);
+    display:inline-block;
+  }
+  .hero h1{
+    font-size:clamp(28px, 4.2vw, 42px);
+    line-height:1.2;
+    max-width:20ch;
+  }
+  .hero h1 em{
+    font-style:normal;
+    color:var(--amber);
+  }
+  .hero .sub em{
+    font-style:normal;
+    color:var(--pink-deep);
+    font-weight:600;
+  }
+  .hero .sub{
+    margin-top:20px;
+    font-size:17px;
+    line-height:1.65;
+    color:var(--ink-soft);
+    max-width:60ch;
+  }
+
+  /* ---------- SECTION SCAFFOLDING ---------- */
+  section{
+    padding:76px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .section-head{
+    display:grid;
+    grid-template-columns: 200px 1fr;
+    gap:40px;
+    margin-bottom:36px;
+  }
+  .section-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    padding-top:6px;
+  }
+  .section-head h2{
+    font-size:clamp(24px,3vw,30px);
+  }
+  .section-body{
+    display:grid;
+    grid-template-columns: 200px 1fr;
+    gap:40px;
+  }
+  .section-body .col-empty{ }
+  .section-body .col-text p{
+    color:var(--ink-soft);
+    max-width:62ch;
+    margin:0 0 18px;
+    font-size:16px;
+  }
+  .section-body .col-text p:last-child{ margin-bottom:0; }
+
+  @media (max-width:760px){
+    .section-head, .section-body{ grid-template-columns:1fr; gap:14px; }
+  }
+
+  /* ---------- HOW I WORK ---------- */
+  .steps{
+    list-style:none;
+    margin:0; padding:0;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .steps li{
+    background:var(--surface);
+    padding:20px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .steps .num{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--amber);
+  }
+  .steps .txt{
+    font-size:14.5px;
+    color:var(--ink);
+    line-height:1.45;
+  }
+  @media (max-width:760px){
+    .steps{ grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width:480px){
+    .steps{ grid-template-columns: 1fr; }
+  }
+
+  .deliverables{
+    margin-top:26px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--slate);
+    background:var(--slate-soft);
+    border-radius:var(--radius);
+    padding:6px 10px;
+  }
+
+  /* ---------- CONTACT STRIP ---------- */
+  .contact-strip{
+    padding:0;
+    border-bottom:1px solid var(--line);
+    background:var(--ink);
+  }
+  .contact-strip .wrap{
+    padding:52px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+    flex-wrap:wrap;
+  }
+  .contact-strip p{
+    color:#C7CDC8;
+    font-size:16px;
+    max-width:56ch;
+    margin:0;
+  }
+  .contact-strip strong{ color:#fff; font-weight:500; }
+  .cta{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    text-decoration:none;
+    color:var(--ink);
+    background:var(--amber);
+    padding:12px 22px;
+    border-radius:var(--radius);
+    white-space:nowrap;
+    transition: transform .18s ease, background .18s ease;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  .cta:hover{ background:#F28FAE; transform:translateY(-1px); }
+
+  /* ---------- FRAMEWORK / MATRIX ---------- */
+  .framework-grid{
+    display:grid;
+    grid-template-columns: 200px 1fr;
+    gap:40px;
+  }
+  .axis-defs{
+    margin-top:28px;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:20px;
+  }
+  .axis-def{
+    border-left:2px solid var(--amber);
+    padding-left:14px;
+  }
+  .axis-def h3{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .axis-def p{
+    font-size:14.5px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+
+  .matrix-wrap{
+    margin-top:44px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:28px 28px 20px;
+  }
+  .matrix-title{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    margin-bottom:16px;
+  }
+  svg#matrix{ width:100%; height:auto; display:block; }
+  .matrix-legend{
+    display:flex; gap:22px; flex-wrap:wrap;
+    margin-top:14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .matrix-legend span{ display:inline-flex; align-items:center; gap:7px; }
+  .legend-dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+
+  .mtooltip{
+    position:absolute;
+    pointer-events:none;
+    background:var(--ink);
+    color:#F5F6F2;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    padding:9px 12px;
+    border-radius:var(--radius);
+    max-width:230px;
+    line-height:1.4;
+    opacity:0;
+    transform:translate(-50%,-110%);
+    transition:opacity .15s ease;
+    z-index:10;
+  }
+  .mtooltip strong{ display:block; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--amber); margin-bottom:3px; letter-spacing:0.03em; text-transform:uppercase;}
+
+  .dotpt{ cursor:pointer; }
+  .dotpt circle.ring{ opacity:0; transition:opacity .15s ease; }
+  .dotpt:hover circle.ring{ opacity:1; }
+  .dotpt:hover circle.core{ r:7; }
+  .dotpt circle.core{ transition: r .15s ease; }
+
+  /* ---------- CARDS (active/watchlist) ---------- */
+  .cards{
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .card{
+    background:var(--surface);
+    padding:26px 26px;
+    display:grid;
+    grid-template-columns: 170px 1fr;
+    gap:24px;
+  }
+  .card .status{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding-top:3px;
+  }
+  .status.proven{ color:var(--amber); }
+  .status.scoping{ color:var(--slate); }
+  .status.watch{ color:var(--watchlist); }
+  .card h3{
+    font-size:18px;
+    margin-bottom:4px;
+  }
+  .card .kicker{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    color:var(--ink-faint);
+    margin-bottom:10px;
+    display:block;
+  }
+  .card p{
+    font-size:15px;
+    color:var(--ink-soft);
+    margin:0;
+    max-width:60ch;
+  }
+  .card.watch{ opacity:0.82; }
+  @media (max-width:640px){
+    .card{ grid-template-columns:1fr; gap:8px; }
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    padding:44px 0 60px;
+  }
+  footer .wrap{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+  footer .fmono{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--ink-faint);
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span>OPERATIONAL INTELLIGENCE LAB</div>
+    <a class="nav-link" href="https://www.linkedin.com/in/priyanshi-katare-754414178/" target="_blank" rel="noopener">Connect on LinkedIn ↗</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap reveal">
+    <div class="eyebrow">An independent research lab</div>
+    <h1>This lab exists because of one project I couldn't put down.</h1>
+    <p class="sub">I built a prototype for healthcare prior authorization — a process that decides whether someone gets covered care, running on manual review and inconsistent payer rules. I grew up watching my family navigate the US healthcare and insurance system from scratch — translating paperwork, fighting bills, learning rules nobody handed them. That's given me a long habit of noticing which systems assume you already know the unwritten rules, and which ones don't. Once I saw how much of prior authorization's delay was avoidable, I couldn't unsee it. That project is the reason this lab exists.</p>
+    <p class="sub">It also isn't new behavior. At Goldman, I joined a business while it was still being built and got to help shape it from scratch. At home, if something isn't working — where I keep losing my keys, how my kitchen is laid out, a CRM with no real structure — I'll notice it for a few days, then just <em>fix</em> it. This lab is that same instinct, aimed at a bigger set of problems.</p>
+  </div>
+</header>
+
+<section id="why">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-label">01 — Why this exists</div>
+      <h2>Coordination fails before expertise does.</h2>
+    </div>
+    <div class="section-body reveal">
+      <div class="col-empty"></div>
+      <div class="col-text">
+        <p>The same pattern shows up across healthcare, enterprise software, finance, compliance, and customer operations: information gets fragmented, ownership shifts across teams mid-process, approvals stack up, and context gets lost at every handoff. None of this is a knowledge problem — the people involved usually know exactly what needs to happen. It's a coordination problem, and coordination problems compound: a delay at one handoff doesn't stay contained, it grows by the time it reaches whoever has to act on it next.</p>
+        <p>AI gets pitched as a way to replace the person doing the work. That's the wrong target here. The better question is whether AI can sit <em>between</em> the people already doing the work — carrying context across the handoff instead of losing it, surfacing the decision instead of burying it in a thread or a form. That's the gap this lab studies.</p>
+        <p>I do this because the moment a fix lands and someone says <em>that's so much better</em> is the actual point — for me, not just for them. That reaction is the real test of whether a friction point was worth solving. I'd keep doing this even without a job or an audience attached to it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-label">02 — How I work</div>
+      <h2>The same sequence, every time.</h2>
+    </div>
+    <div class="section-body reveal">
+      <div class="col-empty"></div>
+      <div class="col-text">
+        <p>I trust a process more than a hunch — a habit from underwriting decisions at Goldman, where getting the sequence right mattered more than getting there fast. Whether the workflow is a healthcare prior authorization or a contract handoff, every project moves through the same nine steps.</p>
+        <ol class="steps" style="margin-top:6px;">
+          <li><span class="num mono">01</span><span class="txt">Observe the workflow as it actually happens, not as it's documented</span></li>
+          <li><span class="num mono">02</span><span class="txt">Map the end-to-end process</span></li>
+          <li><span class="num mono">03</span><span class="txt">Talk to the people doing the work</span></li>
+          <li><span class="num mono">04</span><span class="txt">Find where the friction actually is, not where it's assumed to be</span></li>
+          <li><span class="num mono">05</span><span class="txt">Quantify the business and quality impact</span></li>
+          <li><span class="num mono">06</span><span class="txt">Design what the workflow should look like instead</span></li>
+          <li><span class="num mono">07</span><span class="txt">Build a working prototype</span></li>
+          <li><span class="num mono">08</span><span class="txt">Test it with real users</span></li>
+          <li><span class="num mono">09</span><span class="txt">Write down what worked, what didn't, and iterate</span></li>
+        </ol>
+        <div class="deliverables">
+          <span class="tag">Research report</span>
+          <span class="tag">Current-state workflow map</span>
+          <span class="tag">Friction analysis</span>
+          <span class="tag">Future-state design</span>
+          <span class="tag">Working prototype</span>
+          <span class="tag">Reflection</span>
+        </div>
+        <p style="margin-top:26px;">It's the same discipline every time, on purpose — the sequence is the only part of this I don't improvise.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="contact-strip">
+  <div class="wrap reveal">
+    <p>This is a running body of work, not a finished product — <strong>projects move from watchlist to active</strong> as they clear the bar below. I'm building this alongside an active job search in healthtech and operations, so if you're hiring, working on something similar, or just want to compare notes:</p>
+    <a class="cta" href="https://www.linkedin.com/in/priyanshi-katare-754414178/" target="_blank" rel="noopener">Find me on LinkedIn →</a>
+  </div>
+</div>
+
+<section id="framework">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-label">03 — The framework</div>
+      <h2>Not every broken process is worth fixing first.</h2>
+    </div>
+    <div class="framework-grid reveal">
+      <div class="col-empty"></div>
+      <div class="col-text">
+        <p>I prioritize on two axes: how much fixing something changes downstream, and how narrow the first fix can actually be.</p>
+        <div class="axis-defs">
+          <div class="axis-def">
+            <h3>Impact</h3>
+            <p>Does fixing this change how much else moves? A breakdown that a lot of people and systems depend on matters more than an isolated one. Something that keeps happening matters more than something that happened once.</p>
+          </div>
+          <div class="axis-def">
+            <h3>Resource</h3>
+            <p>How narrow can the first fix be? A single structured output that replaces one manual step is low-resource, even if the process around it is huge. Rebuilding multiple systems is high-resource, no matter the eventual payoff.</p>
+          </div>
+        </div>
+        <p style="margin-top:22px;">I'm looking for the overlap: <strong style="color:var(--ink); font-weight:600;">high impact, low resource</strong> — the narrow wedge that moves a disproportionate amount of the system once it's placed right. High impact but high resource is worth watching, not building yet. Low impact usually gets skipped, however easy it'd be.</p>
+        <p style="margin-top:18px;">I built this rubric for the same reason I've always tried to name the unwritten rules of a system before trusting it — a habit that started long before this lab, watching which systems assumed you already knew how they worked, and which ones didn't.</p>
+      </div>
+    </div>
+
+    <div class="matrix-wrap reveal" style="position:relative;">
+      <div class="matrix-title">Impact vs. resource — current portfolio</div>
+      <svg id="matrix" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Scatter plot of projects by impact and resource required">
+        <!-- target zone -->
+        <rect x="70" y="30" width="365" height="270" fill="var(--target-fill)"></rect>
+        <!-- axes -->
+        <line x1="70" y1="410" x2="760" y2="410" stroke="var(--line)" stroke-width="1"></line>
+        <line x1="70" y1="30" x2="70" y2="410" stroke="var(--line)" stroke-width="1"></line>
+        <!-- gridlines -->
+        <line x1="70" y1="300" x2="760" y2="300" stroke="var(--line)" stroke-width="1" stroke-dasharray="2,4"></line>
+        <line x1="435" y1="30" x2="435" y2="410" stroke="var(--line)" stroke-width="1" stroke-dasharray="2,4"></line>
+
+        <!-- axis labels -->
+        <text x="415" y="440" font-family="JetBrains Mono, monospace" font-size="12" fill="var(--ink-faint)" text-anchor="middle">RESOURCE REQUIRED →</text>
+        <text x="30" y="220" font-family="JetBrains Mono, monospace" font-size="12" fill="var(--ink-faint)" text-anchor="middle" transform="rotate(-90 30 220)">IMPACT →</text>
+
+        <text x="80" y="288" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--amber)" letter-spacing="0.5">TARGET ZONE</text>
+
+        <!-- points: cx = 70 + resource*6.9, cy = 410 - impact*3.8 -->
+        <!-- Submission Coordinator: resource 20 impact 90 -->
+        <g class="dotpt" data-name="AI Submission Coordinator" data-note="Proven. Single structured output, tested prototype." data-color="active">
+          <circle class="ring" cx="208" cy="68" r="13" fill="none" stroke="var(--amber)" stroke-width="1.5"></circle>
+          <circle class="core" cx="208" cy="68" r="6" fill="var(--amber)"></circle>
+          <text x="208" y="52" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--ink)" text-anchor="middle">Submission Coordinator</text>
+        </g>
+        <!-- Escalation: resource 15 impact 75 -->
+        <g class="dotpt" data-name="Customer Escalation Management" data-note="Active/scoping. One system, one decision, cost already visible." data-color="active">
+          <circle class="ring" cx="173" cy="125" r="13" fill="none" stroke="var(--amber)" stroke-width="1.5"></circle>
+          <circle class="core" cx="173" cy="125" r="6" fill="var(--amber)"></circle>
+          <text x="173" y="146" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--ink)" text-anchor="middle">Escalation Mgmt</text>
+        </g>
+        <!-- Regulatory: resource 25 impact 78 -->
+        <g class="dotpt" data-name="Regulatory &amp; Policy Change Tracking" data-note="Active/scoping. Public data, no insider access needed." data-color="active">
+          <circle class="ring" cx="243" cy="113" r="13" fill="none" stroke="var(--amber)" stroke-width="1.5"></circle>
+          <circle class="core" cx="243" cy="113" r="6" fill="var(--amber)"></circle>
+          <text x="243" y="97" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--ink)" text-anchor="middle">Regulatory Tracking</text>
+        </g>
+        <!-- SLA: resource 35 impact 82 -->
+        <g class="dotpt" data-name="Cross-Team SLA &amp; Handoff Breach Detection" data-note="Active/scoping. Most universal pattern; GitHub issues as a real public proxy." data-color="active">
+          <circle class="ring" cx="312" cy="99" r="13" fill="none" stroke="var(--amber)" stroke-width="1.5"></circle>
+          <circle class="core" cx="312" cy="99" r="6" fill="var(--amber)"></circle>
+          <text x="312" y="120" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--ink)" text-anchor="middle">SLA / Handoff</text>
+        </g>
+        <!-- Care Coordination: resource 70 impact 88 -->
+        <g class="dotpt" data-name="Care Coordination" data-note="Watchlist. High impact, but not yet scoped to a single wedge." data-color="watch">
+          <circle class="ring" cx="553" cy="76" r="13" fill="none" stroke="var(--watchlist)" stroke-width="1.5"></circle>
+          <circle class="core" cx="553" cy="76" r="6" fill="var(--watchlist)"></circle>
+          <text x="553" y="60" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--ink-soft)" text-anchor="middle">Care Coordination</text>
+        </g>
+        <!-- Deal Coordination: resource 80 impact 55 -->
+        <g class="dotpt" data-name="Autonomous Deal Coordination" data-note="Watchlist. Judgment-heavy friction, hard to access real data." data-color="watch">
+          <circle class="ring" cx="622" cy="201" r="13" fill="none" stroke="var(--watchlist)" stroke-width="1.5"></circle>
+          <circle class="core" cx="622" cy="201" r="6" fill="var(--watchlist)"></circle>
+          <text x="622" y="222" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--ink-soft)" text-anchor="middle">Deal Coordination</text>
+        </g>
+      </svg>
+      <div class="matrix-legend">
+        <span><span class="legend-dot" style="background:var(--amber);"></span>Active</span>
+        <span><span class="legend-dot" style="background:var(--watchlist);"></span>Watchlist</span>
+        <span style="color:var(--ink-faint);">Hover a point for detail</span>
+      </div>
+      <div class="mtooltip" id="mtooltip"><strong id="mt-title"></strong><span id="mt-note"></span></div>
+    </div>
+  </div>
+</section>
+
+<section id="active">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-label">04 — Active work</div>
+      <h2>Four projects clearing the bar.</h2>
+    </div>
+    <div class="cards reveal">
+      <div class="card">
+        <div class="status proven mono">Active — proven</div>
+        <div>
+          <span class="kicker">Healthcare Prior Authorization</span>
+          <h3>AI Submission Coordinator</h3>
+          <p>The proof case for this whole approach. One structured decision point in a process that otherwise runs on manual review across payer-specific rules — built and tested as a working prototype.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="status scoping mono">Active — scoping</div>
+        <div>
+          <span class="kicker">Customer Operations</span>
+          <h3>Customer Escalation Management</h3>
+          <p>Every escalation is where the cost of every upstream failure shows up at once — it comes down to one decision: escalate or not, and to whom. One system of record, one structured decision, and most orgs already track the cost, which makes this an easier case to build.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="status scoping mono">Active — scoping</div>
+        <div>
+          <span class="kicker">Compliance &amp; Legal</span>
+          <h3>Regulatory &amp; Policy Change Tracking</h3>
+          <p>When a rule changes, most organizations still catch it manually — someone notices, figures out what it touches, and routes it to the right person. This doesn't need access to any one company's internal systems; the underlying regulatory data is public.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="status scoping mono">Active — scoping</div>
+        <div>
+          <span class="kicker">Cross-Functional Ops</span>
+          <h3>Cross-Team SLA &amp; Handoff Breach Detection</h3>
+          <p>Almost every internal handoff — engineering to support, sales to legal, ops to finance — has an informal time expectation that nobody actually tracks. Breaches get caught late, after the damage has already moved downstream. This is the escalation pattern, generalized to any handoff with a clock on it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="watchlist" style="border-bottom:none;">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-label">05 — Watchlist</div>
+      <h2>High-impact, not yet scoped.</h2>
+    </div>
+    <div class="section-body reveal" style="margin-bottom:8px;">
+      <div class="col-empty"></div>
+      <div class="col-text">
+        <p>Not every instinct gets acted on right away. These are real, worth solving, and waiting on the right narrow wedge before I build.</p>
+      </div>
+    </div>
+    <div class="cards reveal">
+      <div class="card watch">
+        <div class="status watch mono">Watching</div>
+        <div>
+          <span class="kicker">Healthcare</span>
+          <h3>Care Coordination</h3>
+          <p>High-impact by nature — multiple providers, systems, and a patient all depend on the same handoffs working. Not scoped to one wedge yet. The full coordination problem is too broad to prototype at once, and figuring out which single handoff to start with is still an open question.</p>
+        </div>
+      </div>
+      <div class="card watch">
+        <div class="status watch mono">Watching</div>
+        <div>
+          <span class="kicker">Enterprise Sales</span>
+          <h3>Autonomous Deal Coordination</h3>
+          <p>Deal execution touches legal, sales, compliance, and finance, but a lot of the friction is judgment-heavy — redlines, pricing exceptions, negotiation — which cuts against keeping humans in the loop where judgment actually matters. Watching this one, not building it yet.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap" style="flex-direction:column; align-items:flex-start; gap:18px;">
+    <p style="margin:0; font-size:14.5px; color:var(--ink-soft); max-width:60ch;">See a broken process worth studying? I'd like to hear about it.</p>
+    <div class="wrap" style="padding:0; display:flex; width:100%; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+      <span class="fmono">© 2026 · Operational Intelligence Lab · Priyanshi Katare</span>
+      <a class="nav-link" href="https://www.linkedin.com/in/priyanshi-katare-754414178/" target="_blank" rel="noopener">LinkedIn ↗</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => io.observe(el));
+
+  // Matrix tooltip
+  const tooltip = document.getElementById('mtooltip');
+  const mtTitle = document.getElementById('mt-title');
+  const mtNote = document.getElementById('mt-note');
+  const matrixWrap = document.querySelector('.matrix-wrap');
+  const dots = document.querySelectorAll('.dotpt');
+
+  dots.forEach(dot => {
+    dot.addEventListener('mouseenter', (e) => {
+      mtTitle.textContent = dot.getAttribute('data-name');
+      mtNote.textContent = dot.getAttribute('data-note');
+      tooltip.style.opacity = '1';
+    });
+    dot.addEventListener('mousemove', (e) => {
+      const rect = matrixWrap.getBoundingClientRect();
+      tooltip.style.left = (e.clientX - rect.left) + 'px';
+      tooltip.style.top = (e.clientY - rect.top) + 'px';
+    });
+    dot.addEventListener('mouseleave', () => {
+      tooltip.style.opacity = '0';
+    });
+  });
+
+  // Matrix draw-in animation (respects reduced motion via CSS transition-duration override)
+  const matrixSvg = document.getElementById('matrix');
+  const matrixObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const dots = matrixSvg.querySelectorAll('.dotpt');
+        dots.forEach((d, i) => {
+          d.style.opacity = '0';
+          d.style.transform = 'scale(0.4)';
+          d.style.transformOrigin = 'center';
+          d.style.transformBox = 'fill-box';
+          d.style.transition = `opacity .45s ease ${i * 90}ms, transform .45s ease ${i * 90}ms`;
+          requestAnimationFrame(() => {
+            d.style.opacity = '1';
+            d.style.transform = 'scale(1)';
+          });
+        });
+        matrixObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  matrixObserver.observe(matrixSvg);
+</script>
+
+</body>
+</html>
